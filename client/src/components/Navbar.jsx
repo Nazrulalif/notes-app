@@ -1,21 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ProfileInfo from "./profile/ProfileInfo";
 import { useNavigate } from "react-router-dom";
 import SearchBar from "./searchBar/SearchBar";
 
-const Navbar = () => {
+const Navbar = ({ userInfo, onSearch }) => {
   const navigate = useNavigate();
-
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.clear();
     navigate("/login");
   };
+
+  const handleSearch = () => {
+    if (searchQuery) {
+      onSearch(searchQuery);
+    }
+  };
+
+  const onClearSearch = () => {
+    setSearchQuery("");
+  };
+
+  // Add effect to trigger search when query is cleared
+  useEffect(() => {
+    if (searchQuery === "") {
+      onSearch("");
+    }
+  }, [searchQuery]);
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-center px-6 py-2 drop-shadow-md bg-white">
@@ -24,11 +41,19 @@ const Navbar = () => {
       </div>
 
       <div className="hidden md:flex">
-        <SearchBar className="w-full md:w-auto mb-2 md:mb-0" />
+        <SearchBar
+          value={searchQuery}
+          onChange={({ target }) => {
+            setSearchQuery(target.value);
+          }}
+          handleSearch={handleSearch}
+          onClearSearch={onClearSearch}
+          className="w-full md:w-auto mb-2 md:mb-0"
+        />
       </div>
 
       <div className="hidden md:flex flex-row">
-        <ProfileInfo onLogout={handleLogout} />
+        <ProfileInfo userInfo={userInfo} onLogout={handleLogout} />
       </div>
 
       <div className="md:hidden">
@@ -44,9 +69,16 @@ const Navbar = () => {
         className={`md:hidden w-full ${isMobileMenuOpen ? "block" : "hidden"}`}
       >
         <div className="flex flex-col items-center gap-4 text-center">
-          <SearchBar className="w-full md:w-auto mb-2 md:mb-0" />
-
-          <ProfileInfo onLogout={handleLogout} />
+          <SearchBar
+            className="w-full md:w-auto mb-2 md:mb-0"
+            value={searchQuery}
+            onChange={({ target }) => {
+              setSearchQuery(target.value);
+            }}
+            handleSearch={handleSearch}
+            onClearSearch={onClearSearch}
+          />
+          <ProfileInfo userInfo={userInfo} onLogout={handleLogout} />
         </div>
       </div>
     </div>

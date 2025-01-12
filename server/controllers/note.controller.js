@@ -157,40 +157,76 @@ module.exports = {
 
     updatePin: async (req, res) => {
         const noteId = req.params.noteId;
-        const {
-            isPinned
-        } = req.body;
-        const {
-            user
-        } = req.user;
-
+        const { isPinned } = req.body;  // You will send `isPinned` as true/false to toggle it
+        const { user } = req.user;
+    
         try {
+            // Find the note by ID and ensure it belongs to the correct user
             const note = await Note.findOne({
                 _id: noteId,
                 userId: user._id
             });
-
+    
+            // If note is not found, return an error
             if (!note) {
                 return res.status(400).json({
-                    message: "note not found",
+                    message: "Note not found",
                     error: true
                 });
             }
-
-            if (isPinned) note.isPinned = isPinned;
-
+    
+            // Toggle the isPinned status (flip it)
+            note.isPinned = !note.isPinned;
+    
+            // Save the updated note
             await note.save();
-
+    
+            // Return success response with the updated note
             return res.json({
-                error: true,
+                error: false,  // Indicating success
                 note,
                 message: "Note pin updated successfully"
             });
-
+    
         } catch (error) {
             return res.status(500).json({
-                error: false,
-                message: "Note updated failed"
+                error: true,  // Indicating failure
+                message: "Note update failed"
+            });
+        }
+    },
+    
+
+    search: async (req, res) => {
+        const {user} = req.user;
+        const {query} = req.query;
+
+        if(!query){
+            return res.status(400).json({
+                error:true,
+                message: 'Search Query is required',
+            });
+        }
+
+        try {
+            const matchingNotes = await Note.find({
+                userId: user._id,
+                $or:[
+                    {title:{$regex: new RegExp(query, 'i')}},
+                    {content:{$regex: new RegExp(query, 'i')}},
+
+                ]
+            });
+
+            return res.json({
+                error:false,
+                note:matchingNotes,
+                message:"Notes Matching the search query retrieved successfully"
+            });
+        } catch (error) {
+            return res.status(500).json({
+                error:true,
+                message:"Internal Server Error"
             });
         }
     }

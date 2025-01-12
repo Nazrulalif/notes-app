@@ -15,5 +15,8 @@ router.delete('/delete-note/:noteId', authenticateToken, noteController.delete)
 
 router.put('/update-note-pinned/:noteId', authenticateToken, noteController.updatePin);
 
+router.get('/search-note/', authenticateToken, noteController.search);
+
+
 module.exports = router;
 

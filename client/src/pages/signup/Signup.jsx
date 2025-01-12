@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import PasswordInput from "../../components/input/PasswordInput";
 import { validateEmail } from "../../utils/helper";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axiosInstance from "../../utils/axiosInstance";
 const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [name, setName] = useState("");
 
-  const handleSignup = (e) => {
+  const navigate = useNavigate();
+
+  const handleSignup = async (e) => {
     e.preventDefault();
     if (!validateEmail(email)) {
       setError("Please enter a valid email address");
@@ -19,9 +22,36 @@ const SignUp = () => {
       setError("Password must be at least 6 characters long");
       return;
     }
-    console.log({ email, password });
+    if (!name) {
+      setError("Name must be fill");
+      return;
+    }
 
     setError("");
+
+    try {
+      const res = await axiosInstance.post("/api/create-account", {
+        fullName: name,
+        email: email,
+        password: password,
+      });
+
+      if (res.data && res.data.error) {
+        setError(res.data.message);
+        return;
+      }
+
+      if (res.data && res.data.accessToken) {
+        localStorage.setItem("token", res.data.accessToken);
+        navigate("/");
+      }
+    } catch (error) {
+      if (error.res && error.res.data && error.res.data.message) {
+        setError(error.res.data.message);
+      } else {
+        setError("An expected error occurred. Please try again");
+      }
+    }
   };
 
   return (
